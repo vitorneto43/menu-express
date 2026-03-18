@@ -5,7 +5,9 @@ python-multipart
 pydantic
 pydantic-settings
 email-validator
+python-jose[cryptography]
 stripe
 alembic
 psycopg2-binary
 pymysql
+python-dotenv
