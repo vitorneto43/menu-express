@@ -1,17 +1,14 @@
 import { useEffect, useState } from "react"
 import { Navigate } from "react-router-dom"
 import { getRestaurantByUserId } from "../api/restaurants"
+import type { ReactNode } from "react"
 
 type User = {
   id: number | string
   restaurantProfile?: any
 }
 
-export default function RestaurantRoute({
-  children,
-}: {
-  children: JSX.Element
-}) {
+export default function DriverRoute({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true)
   const [allowed, setAllowed] = useState(false)
 

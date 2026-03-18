@@ -5,6 +5,7 @@ import { getRestaurantById } from "../api/restaurants"
 import { getProductsByRestaurant } from "../api/products"
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet"
 import L from "leaflet"
+import "leaflet/dist/leaflet.css"
 
 type Restaurant = {
   id: number
@@ -54,6 +55,7 @@ function formatAddress(restaurant: Restaurant) {
 
 export default function RestaurantDetail() {
   const { id } = useParams()
+  const restaurantId = Number(id)
   const navigate = useNavigate()
 
   const addItem = useCartStore((state) => state.addItem)
@@ -69,7 +71,7 @@ export default function RestaurantDetail() {
       try {
         if (!id) return
         const restaurantData = await getRestaurantById(id)
-        const productsData = await getProductsByRestaurant(id)
+        const productsData = await getProductsByRestaurant(restaurantId)
 
         setRestaurant(restaurantData)
         setProducts(productsData)

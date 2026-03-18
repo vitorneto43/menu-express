@@ -1,4 +1,5 @@
 import { Navigate } from "react-router-dom"
+import type { ReactNode } from "react"
 
 type User = {
   id: number | string
@@ -7,7 +8,7 @@ type User = {
   courierProfile?: any
 }
 
-export default function DriverRoute({ children }: { children: JSX.Element }) {
+export default function DriveRoute({ children }: { children: ReactNode }) {
   const user: User | null = JSON.parse(localStorage.getItem("user") || "null")
 
   if (!user) {
