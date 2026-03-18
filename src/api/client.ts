@@ -1,7 +1,7 @@
 import axios from "axios"
 
 const api = axios.create({
-  baseURL: "https://menu-express-xx99.vercel.app",
+  baseURL: "https://menu-express.onrender.com",
   headers: {
     "Content-Type": "application/json",
   },
