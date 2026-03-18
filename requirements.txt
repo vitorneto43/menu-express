@@ -3,8 +3,9 @@ uvicorn[standard]
 sqlalchemy
 python-multipart
 pydantic
+pydantic-settings
+email-validator
 stripe
-psycopg2-binary
 alembic
-pydantic-settings>=2.0.0
+psycopg2-binary
 pymysql
