@@ -6,3 +6,4 @@ pydantic
 stripe
 psycopg2-binary
 alembic
+pydantic-settings>=2.0.0
