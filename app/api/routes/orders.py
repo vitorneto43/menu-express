@@ -345,10 +345,9 @@ def create_order(data: OrderCreate, db: Session = Depends(get_db)):
                 }
             )
 
-        delivery_fee = Decimal(
-            str(data.delivery_fee if data.delivery_fee is not None else restaurant.delivery_fee or 0)
-        )
-        print("=== DELIVERY FEE ===", delivery_fee)
+        delivery_fee = Decimal(str(restaurant.delivery_fee or 0)).quantize(Decimal("0.01"))
+        print("=== DELIVERY FEE BANCO ===", delivery_fee)
+
 
         values = calc_order_values(subtotal, delivery_fee, data.partner_delivery)
         print("=== VALUES ===", values)

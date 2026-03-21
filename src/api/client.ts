@@ -1,7 +1,9 @@
 import axios from "axios"
 
+export const API_BASE_URL = "https://menuexpress.delivery"
+
 const api = axios.create({
-  baseURL: "https://menu-express.onrender.com",
+  baseURL: `${API_BASE_URL}/api`,
   headers: {
     "Content-Type": "application/json",
   },

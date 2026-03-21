@@ -11,6 +11,7 @@ export default function RegisterRestaurant() {
   const [description, setDescription] = useState("")
   const [phone, setPhone] = useState("")
   const [deliveryFee, setDeliveryFee] = useState("")
+  const [category, setCategory] = useState("")
 
   const [addressStreet, setAddressStreet] = useState("")
   const [addressNumber, setAddressNumber] = useState("")
@@ -51,6 +52,7 @@ export default function RegisterRestaurant() {
         owner_name: ownerName,
         description,
         phone,
+        category,
 
         address_street: addressStreet,
         address_number: addressNumber,
@@ -117,6 +119,7 @@ export default function RegisterRestaurant() {
             onChange={(e) => setRestaurantName(e.target.value)}
           />
 
+
           <input
             type="text"
             placeholder="Nome do responsável"
@@ -140,6 +143,23 @@ export default function RegisterRestaurant() {
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
           />
+
+          <select
+            className="w-full border p-3 rounded"
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
+          >
+            <option value="">Selecione a categoria do restaurante</option>
+            <option value="Hamburguer">Hamburguer</option>
+            <option value="Pizza">Pizza</option>
+            <option value="Sushi">Sushi</option>
+            <option value="Comida Chinesa">Comida Chinesa</option>
+            <option value="Japonesa">Japonesa</option>
+            <option value="Açaí">Açaí</option>
+            <option value="Marmita">Marmita</option>
+            <option value="Lanches">Lanches</option>
+            <option value="Doces">Doces</option>
+          </select>
 
           <input
             type="number"

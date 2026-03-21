@@ -1,12 +1,20 @@
+import { useEffect, useState } from "react"
+import { useNavigate } from "react-router-dom"
 import { useCartStore } from "../store/cartStore"
 import Navbar from "../components/Navbar"
-import { useNavigate } from "react-router-dom"
+import { getRestaurantById } from "../api/restaurants"
+
+type Restaurant = {
+  id: number
+  name: string
+  delivery_fee: number | string
+}
 
 export default function Cart() {
-
   const navigate = useNavigate()
   const {
     items,
+    restaurantId,
     removeItem,
     increaseQuantity,
     decreaseQuantity,
@@ -14,14 +22,29 @@ export default function Cart() {
     clearCart,
   } = useCartStore()
 
-  const deliveryFee = 6.99
+  const [restaurant, setRestaurant] = useState<Restaurant | null>(null)
+
+  useEffect(() => {
+    async function fetchRestaurant() {
+      try {
+        if (!restaurantId) return
+        const data = await getRestaurantById(restaurantId)
+        setRestaurant(data)
+      } catch (error) {
+        console.error("Erro ao buscar restaurante:", error)
+      }
+    }
+
+    fetchRestaurant()
+  }, [restaurantId])
+
+  const deliveryFee = Number(restaurant?.delivery_fee || 0)
   const subtotal = totalPrice()
   const total = subtotal + (items.length > 0 ? deliveryFee : 0)
 
   return (
-
     <div className="min-h-screen bg-gray-100 p-6">
-    <Navbar />
+      <Navbar />
       <div className="max-w-4xl mx-auto">
         <h1 className="text-3xl font-bold mb-6">Seu carrinho</h1>
 

@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom"
 import { useCartStore } from "../store/cartStore"
 import { getRestaurantByUserId } from "../api/restaurants"
 import { getCourierByUserId } from "../api/couriers"
-import { useEffect } from "react"
+import { useEffect, useMemo, useState } from "react"
 
 type User = {
   id: number | string
@@ -22,13 +22,35 @@ export default function Navbar() {
   const loadCart = useCartStore((state) => state.loadCart)
   const clearCart = useCartStore((state) => state.clearCart)
 
-  const totalItems = items.reduce((total, item) => total + item.quantity, 0)
+  const [user, setUser] = useState<User | null>(() => {
+    const savedUser = localStorage.getItem("user")
+    return savedUser ? JSON.parse(savedUser) : null
+  })
+
+  const totalItems = useMemo(() => {
+    return items.reduce((total, item) => total + item.quantity, 0)
+  }, [items])
 
   useEffect(() => {
     loadCart()
+  }, [loadCart, user?.id, user?.role])
+
+  useEffect(() => {
+    function syncUserFromStorage() {
+      const savedUser = localStorage.getItem("user")
+      setUser(savedUser ? JSON.parse(savedUser) : null)
+      loadCart()
+    }
+
+    window.addEventListener("storage", syncUserFromStorage)
+    window.addEventListener("focus", syncUserFromStorage)
+
+    return () => {
+      window.removeEventListener("storage", syncUserFromStorage)
+      window.removeEventListener("focus", syncUserFromStorage)
+    }
   }, [loadCart])
 
-  const user: User | null = JSON.parse(localStorage.getItem("user") || "null")
   const isLogged = !!user
 
   const restaurantProfile = user?.restaurantProfile || null
@@ -41,6 +63,7 @@ export default function Navbar() {
     clearCart()
     localStorage.removeItem("user")
     localStorage.removeItem("token")
+    setUser(null)
     navigate("/login")
   }
 
@@ -53,13 +76,13 @@ export default function Navbar() {
     try {
       const restaurant = await getRestaurantByUserId(Number(user.id))
 
-      localStorage.setItem(
-        "user",
-        JSON.stringify({
-          ...user,
-          restaurantProfile: restaurant,
-        })
-      )
+      const updatedUser = {
+        ...user,
+        restaurantProfile: restaurant,
+      }
+
+      localStorage.setItem("user", JSON.stringify(updatedUser))
+      setUser(updatedUser)
 
       navigate("/restaurant/dashboard")
     } catch (err) {
@@ -77,13 +100,13 @@ export default function Navbar() {
     try {
       const courier = await getCourierByUserId(Number(user.id))
 
-      localStorage.setItem(
-        "user",
-        JSON.stringify({
-          ...user,
-          courierProfile: courier,
-        })
-      )
+      const updatedUser = {
+        ...user,
+        courierProfile: courier,
+      }
+
+      localStorage.setItem("user", JSON.stringify(updatedUser))
+      setUser(updatedUser)
 
       navigate("/driver/dashboard")
     } catch (err) {
@@ -119,13 +142,13 @@ export default function Navbar() {
     try {
       const courier = await getCourierByUserId(Number(user.id))
 
-      localStorage.setItem(
-        "user",
-        JSON.stringify({
-          ...user,
-          courierProfile: courier,
-        })
-      )
+      const updatedUser = {
+        ...user,
+        courierProfile: courier,
+      }
+
+      localStorage.setItem("user", JSON.stringify(updatedUser))
+      setUser(updatedUser)
 
       navigate("/driver/dashboard")
     } catch (err) {

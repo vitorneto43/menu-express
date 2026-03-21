@@ -16,7 +16,9 @@ from app.api.routes.stripe_webhook import router as stripe_webhook_router
 from app.api.routes.order_status import router as order_status_router
 from app.api.routes.couriers import router as couriers_router
 from app.api.routes.promotions import router as promotions_router
-
+from app.api.routes import reviews
+from app.api.routes import pix
+from app.api.routes import ratings
 
 app = FastAPI(
     title=settings.APP_NAME,
@@ -72,6 +74,9 @@ app.include_router(stripe_webhook_router)
 app.include_router(order_status_router)
 app.include_router(couriers_router)
 app.include_router(promotions_router)
+app.include_router(reviews.router)
+app.include_router(pix.router)
+app.include_router(ratings.router)
 
 @app.get("/")
 def root():

@@ -293,7 +293,8 @@ export default function Home() {
                       id: restaurant.id,
                       name: restaurant.name,
                       category: restaurant.description || "Restaurante",
-                      rating: 4.8,
+                      rating: restaurant.rating_average || 0,
+                      ratingCount: restaurant.rating_count || 0,
                       deliveryTime: `Entrega R$ ${Number(
                         restaurant.delivery_fee
                       ).toFixed(2)}`,

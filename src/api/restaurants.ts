@@ -15,12 +15,14 @@ export async function getRestaurantByUserId(userId: number) {
   return response.data
 }
 
+
+
 export async function createRestaurant(data: {
   user_id: number
   name: string
   owner_name?: string
   description?: string
-  image?: string | null
+  image?: File | string | null
   phone?: string
 
   address_street?: string
@@ -41,39 +43,48 @@ export async function createRestaurant(data: {
   account_number?: string
   document_number?: string
 }) {
-  const payload = {
-    user_id: Number(data.user_id),
-    name: data.name.trim(),
-    owner_name: data.owner_name?.trim() || null,
-    description: data.description?.trim() || null,
-    image: data.image?.trim() || null,
-    phone: data.phone?.trim() || null,
+  const formData = new FormData()
 
-    address_street: data.address_street?.trim() || null,
-    address_number: data.address_number?.trim() || null,
-    address_neighborhood: data.address_neighborhood?.trim() || null,
-    address_city: data.address_city?.trim() || null,
-    address_state: data.address_state?.trim() || null,
-    address_cep: data.address_cep?.trim() || null,
+  formData.append("user_id", String(Number(data.user_id)))
+  formData.append("name", data.name.trim())
 
-    latitude:
-      data.latitude !== undefined && data.latitude !== null && data.latitude !== ""
-        ? Number(data.latitude)
-        : null,
-    longitude:
-      data.longitude !== undefined && data.longitude !== null && data.longitude !== ""
-        ? Number(data.longitude)
-        : null,
+  if (data.owner_name?.trim()) formData.append("owner_name", data.owner_name.trim())
+  if (data.description?.trim()) formData.append("description", data.description.trim())
+  if (data.phone?.trim()) formData.append("phone", data.phone.trim())
 
-    delivery_fee: Number(data.delivery_fee || 0),
-    pix_key: data.pix_key?.trim() || null,
-    bank_name: data.bank_name?.trim() || null,
-    account_type: data.account_type?.trim() || null,
-    agency: data.agency?.trim() || null,
-    account_number: data.account_number?.trim() || null,
-    document_number: data.document_number?.trim() || null,
+  if (data.address_street?.trim()) formData.append("address_street", data.address_street.trim())
+  if (data.address_number?.trim()) formData.append("address_number", data.address_number.trim())
+  if (data.address_neighborhood?.trim()) formData.append("address_neighborhood", data.address_neighborhood.trim())
+  if (data.address_city?.trim()) formData.append("address_city", data.address_city.trim())
+  if (data.address_state?.trim()) formData.append("address_state", data.address_state.trim())
+  if (data.address_cep?.trim()) formData.append("address_cep", data.address_cep.trim())
+
+  if (data.latitude !== undefined && data.latitude !== null && data.latitude !== "") {
+    formData.append("latitude", String(Number(data.latitude)))
   }
 
-  const response = await api.post("/restaurants", payload)
+  if (data.longitude !== undefined && data.longitude !== null && data.longitude !== "") {
+    formData.append("longitude", String(Number(data.longitude)))
+  }
+
+  formData.append("delivery_fee", String(Number(data.delivery_fee || 0)))
+
+  if (data.pix_key?.trim()) formData.append("pix_key", data.pix_key.trim())
+  if (data.bank_name?.trim()) formData.append("bank_name", data.bank_name.trim())
+  if (data.account_type?.trim()) formData.append("account_type", data.account_type.trim())
+  if (data.agency?.trim()) formData.append("agency", data.agency.trim())
+  if (data.account_number?.trim()) formData.append("account_number", data.account_number.trim())
+  if (data.document_number?.trim()) formData.append("document_number", data.document_number.trim())
+
+  if (data.image instanceof File) {
+    formData.append("image", data.image)
+  }
+
+  const response = await api.post("/restaurants", formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  })
+
   return response.data
 }

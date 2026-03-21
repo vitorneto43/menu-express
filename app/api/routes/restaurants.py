@@ -40,6 +40,7 @@ def serialize_restaurant(restaurant: Restaurant):
         "description": restaurant.description,
         "image": restaurant.image,
         "phone": restaurant.phone,
+        "category": restaurant.category,
         "delivery_fee": float(restaurant.delivery_fee or 0),
         "address": {
             "street": restaurant.address_street,
@@ -59,6 +60,10 @@ def serialize_restaurant(restaurant: Restaurant):
         "document_number": restaurant.document_number,
         "stripe_account_id": restaurant.stripe_account_id,
         "stripe_onboarding_complete": restaurant.stripe_onboarding_complete,
+
+        # ⭐ ESTRELAS (ADICIONAR AQUI)
+        "rating_average": float(restaurant.rating_average or 0),
+        "rating_count": restaurant.rating_count or 0,
     }
 
 
@@ -69,6 +74,7 @@ def create_restaurant(
     owner_name: str | None = Form(None),
     description: str | None = Form(None),
     phone: str | None = Form(None),
+    category: str | None = Form(None),
     address_street: str | None = Form(None),
     address_number: str | None = Form(None),
     address_neighborhood: str | None = Form(None),
@@ -96,6 +102,7 @@ def create_restaurant(
         description=description,
         image=image_url,
         phone=phone,
+        category=category,
         address_street=address_street,
         address_number=address_number,
         address_neighborhood=address_neighborhood,

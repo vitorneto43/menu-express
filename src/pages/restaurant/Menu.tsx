@@ -18,10 +18,11 @@ export default function RestaurantMenu() {
   const [price, setPrice] = useState("")
   const [category, setCategory] = useState("Hambúrgueres")
   const [available, setAvailable] = useState(true)
-  const [image, setImage] = useState<string | null>(null)
   const [editingId, setEditingId] = useState<number | null>(null)
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
+  const [imagePreview, setImagePreview] = useState<string | null>(null)
+  const [imageFile, setImageFile] = useState<File | null>(null)
 
   function resetForm() {
     setName("")
@@ -29,7 +30,8 @@ export default function RestaurantMenu() {
     setPrice("")
     setCategory("Hambúrgueres")
     setAvailable(true)
-    setImage(null)
+    setImagePreview(null)
+    setImageFile(null)
     setEditingId(null)
   }
 
@@ -81,7 +83,8 @@ export default function RestaurantMenu() {
     if (!file) return
 
     const imageUrl = URL.createObjectURL(file)
-    setImage(imageUrl)
+    setImagePreview(imageUrl)
+    setImageFile(file)
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -110,7 +113,7 @@ export default function RestaurantMenu() {
         name,
         description,
         price: Number(price.replace(",", ".")),
-        image,
+        imageFile,
         category,
         available,
       })
@@ -130,7 +133,8 @@ export default function RestaurantMenu() {
     setPrice(product.price)
     setCategory(product.category)
     setAvailable(product.available)
-    setImage(product.image)
+    setImagePreview(product.image || null)
+    setImageFile(null)
   }
 
   function handleDeleteProduct(id: number) {
@@ -169,6 +173,8 @@ export default function RestaurantMenu() {
             <option>Pizza</option>
             <option>Marmitas</option>
             <option>Açaí</option>
+            <option>Sushi</option>
+            <option>Comida Chinesa</option>
           </select>
 
           <textarea
@@ -205,11 +211,11 @@ export default function RestaurantMenu() {
             />
           </div>
 
-          {image && (
+          {imagePreview && (
             <div className="md:col-span-2">
               <p className="font-medium mb-2">Prévia da imagem</p>
               <img
-                src={image}
+                src={imagePreview}
                 alt="Prévia"
                 className="w-40 h-40 object-cover rounded-xl border"
               />

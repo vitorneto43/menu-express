@@ -34,11 +34,14 @@ type OrderType = {
   }>
 }
 
+type TabType = "ativos" | "historico"
+
 export default function RestaurantOrders() {
   const [orders, setOrders] = useState<OrderType[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
   const [restaurantId, setRestaurantId] = useState<number | null>(null)
+  const [tab, setTab] = useState<TabType>("ativos")
 
   const savedUser = localStorage.getItem("user")
   const user = savedUser ? JSON.parse(savedUser) : null
@@ -130,10 +133,7 @@ export default function RestaurantOrders() {
 
   async function handleStatusChange(orderId: number, status: string) {
     try {
-      const response = await updateOrderStatus(orderId, status)
-
-      console.log("=== STATUS ALTERADO ===")
-      console.log(response)
+      await updateOrderStatus(orderId, status)
 
       setOrders((prev) =>
         prev.map((order) =>
@@ -176,10 +176,119 @@ export default function RestaurantOrders() {
     [orders]
   )
 
-  const operationalOrders = useMemo(
-    () => orders.filter((order) => order.status !== "pending"),
+  const activeOrders = useMemo(
+    () =>
+      orders.filter((order) =>
+        ["accepted", "preparing", "ready", "picked_up", "on_the_way"].includes(
+          order.status
+        )
+      ),
     [orders]
   )
+
+  const historyOrders = useMemo(
+    () =>
+      orders.filter((order) =>
+        ["delivered", "cancelled"].includes(order.status)
+      ),
+    [orders]
+  )
+
+  function renderActionButtons(order: OrderType) {
+    switch (order.status) {
+      case "accepted":
+        return (
+          <>
+            <button
+              onClick={() => handleStatusChange(order.id, "preparing")}
+              className="w-full bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-3 rounded-xl font-medium text-center transition"
+            >
+              Em preparo
+            </button>
+
+            <button
+              onClick={() => handleStatusChange(order.id, "cancelled")}
+              className="w-full bg-red-500 hover:bg-red-600 text-white px-4 py-3 rounded-xl font-medium text-center transition"
+            >
+              Cancelar pedido
+            </button>
+          </>
+        )
+
+      case "preparing":
+        return (
+          <>
+            <button
+              onClick={() => handleStatusChange(order.id, "ready")}
+              className="w-full bg-green-500 hover:bg-green-600 text-white px-4 py-3 rounded-xl font-medium text-center transition"
+            >
+              Pronto para retirada
+            </button>
+
+            <button
+              onClick={() => handleStatusChange(order.id, "cancelled")}
+              className="w-full bg-red-500 hover:bg-red-600 text-white px-4 py-3 rounded-xl font-medium text-center transition"
+            >
+              Cancelar pedido
+            </button>
+          </>
+        )
+
+      case "ready":
+        return (
+          <div className="w-full bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-xl text-sm font-medium text-center">
+            Aguardando o entregador retirar o pedido
+          </div>
+        )
+
+      case "picked_up":
+        return (
+          <div className="w-full bg-purple-50 border border-purple-200 text-purple-700 px-4 py-3 rounded-xl text-sm font-medium text-center">
+            Pedido retirado pelo entregador
+          </div>
+        )
+
+      case "on_the_way":
+        return (
+          <div className="w-full bg-indigo-50 border border-indigo-200 text-indigo-700 px-4 py-3 rounded-xl text-sm font-medium text-center">
+            Pedido a caminho do cliente
+          </div>
+        )
+
+      default:
+        return (
+          <>
+            <button
+              onClick={() => handleStatusChange(order.id, "accepted")}
+              className="w-full bg-blue-500 hover:bg-blue-600 text-white px-4 py-3 rounded-xl font-medium text-center transition"
+            >
+              Aceitar pedido
+            </button>
+
+            <button
+              onClick={() => handleStatusChange(order.id, "preparing")}
+              className="w-full bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-3 rounded-xl font-medium text-center transition"
+            >
+              Em preparo
+            </button>
+
+            <button
+              onClick={() => handleStatusChange(order.id, "ready")}
+              className="w-full bg-green-500 hover:bg-green-600 text-white px-4 py-3 rounded-xl font-medium text-center transition"
+            >
+              Pronto para retirada
+            </button>
+
+            <button
+              onClick={() => handleStatusChange(order.id, "cancelled")}
+              className="w-full bg-red-500 hover:bg-red-600 text-white px-4 py-3 rounded-xl font-medium text-center transition"
+            >
+              Cancelar pedido
+            </button>
+          </>
+        )
+    }
+  }
 
   function renderOrderCard(order: OrderType, isPendingPayment = false) {
     return (
@@ -236,9 +345,7 @@ export default function RestaurantOrders() {
                       <span>
                         {item.product_name || "Produto"} x{item.quantity || 0}
                       </span>
-                      <span>
-                        R$ {Number(item.price || 0).toFixed(2)}
-                      </span>
+                      <span>R$ {Number(item.price || 0).toFixed(2)}</span>
                     </div>
                   ))}
                 </div>
@@ -281,39 +388,15 @@ export default function RestaurantOrders() {
 
           {!isPendingPayment && (
             <div className="w-full lg:w-56 flex flex-col gap-3">
-              <button
-                onClick={() => handleStatusChange(order.id, "accepted")}
-                className="w-full bg-blue-500 hover:bg-blue-600 text-white px-4 py-3 rounded-xl font-medium text-center transition"
-              >
-                Aceitar pedido
-              </button>
-
-              <button
-                onClick={() => handleStatusChange(order.id, "preparing")}
-                className="w-full bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-3 rounded-xl font-medium text-center transition"
-              >
-                Em preparo
-              </button>
-
-              <button
-                onClick={() => handleStatusChange(order.id, "ready")}
-                className="w-full bg-green-500 hover:bg-green-600 text-white px-4 py-3 rounded-xl font-medium text-center transition"
-              >
-                Pronto para retirada
-              </button>
-
-              <button
-                onClick={() => handleStatusChange(order.id, "cancelled")}
-                className="w-full bg-red-500 hover:bg-red-600 text-white px-4 py-3 rounded-xl font-medium text-center transition"
-              >
-                Cancelar pedido
-              </button>
+              {renderActionButtons(order)}
             </div>
           )}
         </div>
       </div>
     )
   }
+
+  const currentOrders = tab === "ativos" ? activeOrders : historyOrders
 
   return (
     <div className="min-h-screen bg-gray-100">
@@ -344,26 +427,43 @@ export default function RestaurantOrders() {
           </div>
         )}
 
-        <div>
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-bold text-gray-900">
-              Pedidos operacionais
-            </h2>
-            <span className="bg-blue-100 text-blue-700 text-sm font-semibold px-3 py-1 rounded-full">
-              {operationalOrders.length}
-            </span>
-          </div>
+        <div className="mb-6 flex flex-wrap gap-3">
+          <button
+            type="button"
+            onClick={() => setTab("ativos")}
+            className={`px-4 py-2 rounded-xl font-medium transition ${
+              tab === "ativos"
+                ? "bg-blue-600 text-white"
+                : "bg-white text-gray-700 border border-gray-200 hover:bg-gray-50"
+            }`}
+          >
+            Pedidos ativos ({activeOrders.length})
+          </button>
 
-          {operationalOrders.length === 0 && !loading ? (
-            <div className="bg-white rounded-2xl shadow p-8 text-center text-gray-500">
-              Nenhum pedido operacional no momento.
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {operationalOrders.map((order) => renderOrderCard(order, false))}
-            </div>
-          )}
+          <button
+            type="button"
+            onClick={() => setTab("historico")}
+            className={`px-4 py-2 rounded-xl font-medium transition ${
+              tab === "historico"
+                ? "bg-gray-800 text-white"
+                : "bg-white text-gray-700 border border-gray-200 hover:bg-gray-50"
+            }`}
+          >
+            Histórico ({historyOrders.length})
+          </button>
         </div>
+
+        {currentOrders.length === 0 && !loading ? (
+          <div className="bg-white rounded-2xl shadow p-8 text-center text-gray-500">
+            {tab === "ativos"
+              ? "Nenhum pedido ativo no momento."
+              : "Nenhum pedido no histórico."}
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {currentOrders.map((order) => renderOrderCard(order, false))}
+          </div>
+        )}
       </div>
     </div>
   )

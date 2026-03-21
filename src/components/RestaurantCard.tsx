@@ -1,4 +1,5 @@
 import { useNavigate } from "react-router-dom"
+import StarRating from "./StarRating"
 
 type Restaurant = {
   id: number
@@ -34,9 +35,10 @@ export default function RestaurantCard({ restaurant }: { restaurant: Restaurant 
             </p>
           </div>
 
-          <span className="bg-yellow-50 text-yellow-700 text-sm font-semibold px-2 py-1 rounded-lg">
-            ⭐ {restaurant.rating}
-          </span>
+          <StarRating
+            rating={restaurant.rating}
+            count={restaurant.ratingCount || 0}
+          />
         </div>
 
         <div className="flex items-center justify-between mt-4 text-sm text-gray-600">

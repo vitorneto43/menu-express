@@ -2,6 +2,8 @@ import { useEffect, useState } from "react"
 import api from "../api/client"
 import Navbar from "../components/Navbar"
 import { useCartStore } from "../store/cartStore"
+import { getRestaurantPromotions } from "../api/promotions"
+import type { Promotion } from "../api/promotions"
 
 type Product = {
   id: number
@@ -15,6 +17,7 @@ type Restaurant = {
   id: number
   name: string
   products: Product[]
+  promotions?: Promotion[]
 }
 
 export default function ClientMenu() {
@@ -26,7 +29,37 @@ export default function ClientMenu() {
     async function fetchRestaurants() {
       try {
         const response = await api.get("/restaurants")
-        setRestaurants(response.data)
+        const restaurantsData: Restaurant[] = Array.isArray(response.data)
+          ? response.data
+          : []
+
+        const restaurantsWithPromotions = await Promise.all(
+          restaurantsData.map(async (restaurant) => {
+            try {
+              const promotions = await getRestaurantPromotions(restaurant.id)
+              console.log("RESTAURANTE:", restaurant.id, restaurant.name)
+              console.log("PROMOÇÕES BRUTAS:", promotions)
+              console.log("RESTAURANTS FINAL:", restaurants)
+
+              return {
+                ...restaurant,
+                promotions: Array.isArray(promotions) ? promotions : [],
+              }
+            } catch (error) {
+              console.error(
+                `Erro ao buscar promoções do restaurante ${restaurant.id}:`,
+                error
+              )
+
+              return {
+                ...restaurant,
+                promotions: [],
+              }
+            }
+          })
+        )
+
+        setRestaurants(restaurantsWithPromotions)
       } catch (error) {
         console.error("Erro ao buscar restaurantes:", error)
       } finally {
@@ -50,7 +83,77 @@ export default function ClientMenu() {
         <div className="space-y-8">
           {restaurants.map((restaurant) => (
             <div key={restaurant.id} className="bg-white rounded-2xl shadow p-6">
-              <h2 className="text-2xl font-bold mb-4">{restaurant.name}</h2>
+              <h2 className="text-2xl font-bold mb-6">{restaurant.name}</h2>
+
+              {restaurant.promotions && restaurant.promotions.length > 0 && (
+                <div className="mb-8">
+                  <h3 className="text-xl font-bold text-red-500 mb-4">
+                    Promoções
+                  </h3>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {restaurant.promotions.map((promo) => (
+                      <div
+                        key={promo.id}
+                        className="border-2 border-red-200 rounded-2xl p-4 flex flex-col justify-between bg-red-50"
+                      >
+                        <div>
+                          <img
+                            src={
+                              promo.banner_url ||
+                              "https://via.placeholder.com/300x200?text=Promocao"
+                            }
+                            alt={promo.title}
+                            className="w-full h-40 object-cover rounded-xl mb-3"
+                          />
+
+                          <h4 className="text-lg font-bold">{promo.title}</h4>
+
+                          <p className="text-gray-500 text-sm mb-2">
+                            {promo.description || "Promoção especial"}
+                          </p>
+
+                          {promo.product_name && (
+                            <p className="text-sm text-gray-600 mb-2">
+                              Produto: {promo.product_name}
+                            </p>
+                          )}
+
+                          <p className="text-red-600 font-bold text-xl">
+                            R${" "}
+                            {Number(
+                              String(promo.promotional_price || 0).replace(",", ".")
+                            ).toFixed(2)}
+                          </p>
+                        </div>
+
+                        {promo.product_id && (
+                          <button
+                            onClick={() =>
+                              addItem(
+                                {
+                                  id: promo.product_id as number,
+                                  name: promo.product_name || promo.title,
+                                  price: Number(
+                                    String(promo.promotional_price || 0).replace(",", ".")
+                                  ),
+                                  image: promo.banner_url || "",
+                                },
+                                restaurant.id
+                              )
+                            }
+                            className="mt-4 bg-red-500 hover:bg-red-600 text-white py-2 rounded-xl font-semibold transition"
+                          >
+                            Adicionar promoção ao carrinho
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <h3 className="text-xl font-bold mb-4">Cardápio</h3>
 
               {restaurant.products?.length === 0 ? (
                 <p className="text-gray-500">Nenhum produto disponível.</p>
@@ -63,7 +166,10 @@ export default function ClientMenu() {
                     >
                       <div>
                         <img
-                          src={product.image || "https://via.placeholder.com/300x200?text=Produto"}
+                          src={
+                            product.image ||
+                            "https://via.placeholder.com/300x200?text=Produto"
+                          }
                           alt={product.name}
                           className="w-full h-40 object-cover rounded-xl mb-3"
                         />
@@ -73,7 +179,8 @@ export default function ClientMenu() {
                           {product.description || "Sem descrição"}
                         </p>
                         <p className="text-red-500 font-semibold text-lg">
-                          R$ {Number(String(product.price).replace(",", ".")).toFixed(2)}
+                          R${" "}
+                          {Number(String(product.price).replace(",", ".")).toFixed(2)}
                         </p>
                       </div>
 

@@ -57,7 +57,7 @@ export default function RestaurantProfile() {
 
         {restaurant.image && (
           <img
-            src={`http://localhost:8000/${restaurant.image}`}
+            src={`https://menuexpress.delivery/${restaurant.image}`}
             alt="Restaurante"
             className="w-full max-w-md rounded-xl"
           />

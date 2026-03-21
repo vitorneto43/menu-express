@@ -1,9 +1,11 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import Navbar from "../components/Navbar"
 import { useCartStore } from "../store/cartStore"
 import { createOrder } from "../api/orders"
 import { createCheckoutSession } from "../api/checkout"
+import { createPixPayment } from "../api/pix"
+import { getRestaurantById } from "../api/restaurants"
 
 type Address = {
   street: string
@@ -18,6 +20,12 @@ type Address = {
   longitude?: number | null
 }
 
+type Restaurant = {
+  id: number
+  name: string
+  delivery_fee: number | string
+}
+
 export default function Checkout() {
   const navigate = useNavigate()
   const { items, totalPrice, restaurantId, clearCart } = useCartStore()
@@ -26,6 +34,7 @@ export default function Checkout() {
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
   const [paymentMethod, setPaymentMethod] = useState("card")
+  const [restaurant, setRestaurant] = useState<Restaurant | null>(null)
 
   const savedAddress = localStorage.getItem("customer_address")
 
@@ -53,7 +62,22 @@ export default function Checkout() {
     savedAddress ? JSON.parse(savedAddress).longitude ?? null : null
   )
 
-  const deliveryFee = 6.99
+  useEffect(() => {
+    async function fetchRestaurant() {
+      try {
+        if (!restaurantId) return
+        const data = await getRestaurantById(restaurantId)
+        setRestaurant(data)
+      } catch (err) {
+        console.error("Erro ao buscar restaurante:", err)
+        setError("Não foi possível carregar a taxa de entrega do restaurante")
+      }
+    }
+
+    fetchRestaurant()
+  }, [restaurantId])
+
+  const deliveryFee = Number(restaurant?.delivery_fee || 0)
   const subtotal = totalPrice()
   const total = subtotal + (items.length > 0 ? deliveryFee : 0)
 
@@ -92,8 +116,8 @@ export default function Checkout() {
         setDeliveryLongitude(position.coords.longitude)
         alert("Localização de entrega capturada com sucesso")
       },
-      (error) => {
-        console.error(error)
+      (geoError) => {
+        console.error(geoError)
         alert("Não foi possível obter a localização da entrega")
       }
     )
@@ -102,15 +126,32 @@ export default function Checkout() {
   async function handleStripeCheckout(orderId: number) {
     const data = await createCheckoutSession(orderId)
 
-    console.log("=== CHECKOUT SESSION ===")
-    console.log(data)
-
     if (!data?.checkout_url) {
       throw new Error("checkout_url não retornado pela API")
     }
 
     localStorage.setItem("pending_order_id", String(orderId))
     window.location.href = data.checkout_url
+  }
+
+  async function handlePixPayment(orderId: number) {
+    const data = await createPixPayment(orderId)
+
+    console.log("=== PIX PAYMENT ===", data)
+
+    localStorage.setItem("pending_order_id", String(orderId))
+
+    const hostedUrl =
+      data?.hosted_instructions_url ||
+      data?.pix_page_url ||
+      data?.next_action?.pix_display_qr_code?.hosted_instructions_url
+
+    if (hostedUrl) {
+      window.location.href = hostedUrl
+      return
+    }
+
+    throw new Error("Dados do Pix não retornados pela API")
   }
 
   async function handleConfirmOrder() {
@@ -132,6 +173,11 @@ export default function Checkout() {
 
     if (!restaurantId) {
       setError("Nenhum restaurante vinculado ao carrinho")
+      return
+    }
+
+    if (!restaurant) {
+      setError("Dados do restaurante ainda não carregados")
       return
     }
 
@@ -179,13 +225,7 @@ export default function Checkout() {
         },
       }
 
-      console.log("=== PAYLOAD DO PEDIDO ===")
-      console.log(payload)
-
       const response = await createOrder(payload)
-
-      console.log("=== PEDIDO CRIADO ===")
-      console.log(response)
 
       localStorage.setItem("pending_order_id", String(response.id))
 
@@ -196,18 +236,17 @@ export default function Checkout() {
       }
 
       if (paymentMethod === "pix") {
-        setMessage(`Pedido #${response.id} criado. Aguardando confirmação do pagamento via Pix.`)
-        clearCart()
-        navigate("/meus-pedidos")
+        setMessage(`Pedido #${response.id} criado. Gerando Pix...`)
+        await handlePixPayment(response.id)
         return
       }
+
+      clearCart()
+      navigate("/meus-pedidos")
     } catch (err: any) {
       console.error("=== ERRO NO CHECKOUT ===", err)
-      console.error("response:", err?.response)
-      console.error("response.data:", err?.response?.data)
-
       const detail = err?.response?.data?.detail
-      setError(typeof detail === "string" ? detail : "Erro ao finalizar pedido")
+      setError(typeof detail === "string" ? detail : err?.message || "Erro ao finalizar pedido")
     } finally {
       setLoading(false)
     }
@@ -240,7 +279,6 @@ export default function Checkout() {
                     value={address.street}
                     onChange={(e) => handleAddressChange("street", e.target.value)}
                   />
-
                   <input
                     type="text"
                     placeholder="Número *"
@@ -248,17 +286,13 @@ export default function Checkout() {
                     value={address.number}
                     onChange={(e) => handleAddressChange("number", e.target.value)}
                   />
-
                   <input
                     type="text"
                     placeholder="Bairro *"
                     className="border rounded-xl px-4 py-3"
                     value={address.neighborhood}
-                    onChange={(e) =>
-                      handleAddressChange("neighborhood", e.target.value)
-                    }
+                    onChange={(e) => handleAddressChange("neighborhood", e.target.value)}
                   />
-
                   <input
                     type="text"
                     placeholder="Cidade *"
@@ -266,7 +300,6 @@ export default function Checkout() {
                     value={address.city}
                     onChange={(e) => handleAddressChange("city", e.target.value)}
                   />
-
                   <input
                     type="text"
                     placeholder="Estado *"
@@ -274,7 +307,6 @@ export default function Checkout() {
                     value={address.state}
                     onChange={(e) => handleAddressChange("state", e.target.value)}
                   />
-
                   <input
                     type="text"
                     placeholder="CEP *"
@@ -282,25 +314,19 @@ export default function Checkout() {
                     value={address.cep}
                     onChange={(e) => handleAddressChange("cep", e.target.value)}
                   />
-
                   <input
                     type="text"
                     placeholder="Complemento"
                     className="border rounded-xl px-4 py-3"
                     value={address.complement}
-                    onChange={(e) =>
-                      handleAddressChange("complement", e.target.value)
-                    }
+                    onChange={(e) => handleAddressChange("complement", e.target.value)}
                   />
-
                   <input
                     type="text"
                     placeholder="Referência"
                     className="border rounded-xl px-4 py-3"
                     value={address.reference}
-                    onChange={(e) =>
-                      handleAddressChange("reference", e.target.value)
-                    }
+                    onChange={(e) => handleAddressChange("reference", e.target.value)}
                   />
                 </div>
 
@@ -353,10 +379,7 @@ export default function Checkout() {
 
               <div className="space-y-4">
                 {items.map((item) => (
-                  <div
-                    key={item.id}
-                    className="flex justify-between gap-4 text-sm"
-                  >
+                  <div key={item.id} className="flex justify-between gap-4 text-sm">
                     <div>
                       <p className="font-medium text-gray-900">
                         {item.name} x{item.quantity}
@@ -386,20 +409,15 @@ export default function Checkout() {
                 </div>
               </div>
 
-              {message && (
-                <p className="text-green-600 text-sm mt-4">{message}</p>
-              )}
-
-              {error && (
-                <p className="text-red-500 text-sm mt-4">{error}</p>
-              )}
+              {message && <p className="text-green-600 text-sm mt-4">{message}</p>}
+              {error && <p className="text-red-500 text-sm mt-4">{error}</p>}
 
               <button
                 onClick={handleConfirmOrder}
-                disabled={loading}
+                disabled={loading || !restaurant}
                 className="w-full bg-red-500 hover:bg-red-600 disabled:bg-red-300 text-white py-3 rounded-xl font-semibold mt-6 transition"
               >
-                {loading ? "Processando..." : "Confirmar pedido"}
+                {loading ? "Processando..." : !restaurant ? "Carregando taxa..." : "Confirmar pedido"}
               </button>
             </div>
           </div>
