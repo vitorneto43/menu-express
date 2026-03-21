@@ -17,6 +17,7 @@ class ProductOut(BaseModel):
     description: str | None
     price: float
     image: str | None
+    category: str | None
     available: bool
 
     model_config = {"from_attributes": True}

@@ -1,4 +1,4 @@
-from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, Numeric, String, Text, Time, func
+from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, Numeric, String, Text, Time, func, Column
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.db.database import Base
 
@@ -15,6 +15,8 @@ class Restaurant(Base):
 
     # foto principal do restaurante
     image: Mapped[str | None] = mapped_column(String(255), nullable=True)
+
+    category: Mapped[str | None] = mapped_column(String(100), nullable=True)
 
     phone: Mapped[str | None] = mapped_column(String(30), nullable=True)
 
@@ -49,3 +51,7 @@ class Restaurant(Base):
     products = relationship("Product", back_populates="restaurant", cascade="all, delete-orphan")
     orders = relationship("Order", back_populates="restaurant")
     promotions = relationship("Promotion", back_populates="restaurant", cascade="all, delete-orphan")
+
+    rating_total: Mapped[int] = mapped_column(Integer, default=0)
+    rating_count: Mapped[int] = mapped_column(Integer, default=0)
+    rating_average: Mapped[float] = mapped_column(Numeric(3, 2), default=0)

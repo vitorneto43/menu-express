@@ -81,3 +81,6 @@ class OrderItem(Base):
 
     order = relationship("Order", back_populates="items")
     product = relationship("Product", back_populates="order_items")
+
+    customer_rating: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    customer_review: Mapped[str | None] = mapped_column(Text, nullable=True)

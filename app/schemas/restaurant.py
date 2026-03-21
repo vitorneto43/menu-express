@@ -18,6 +18,8 @@ class RestaurantCreate(BaseModel):
     image: str | None = None
     phone: str | None = None
 
+    category: str | None = None
+
     address_street: str | None = None
     address_number: str | None = None
     address_neighborhood: str | None = None
@@ -46,6 +48,8 @@ class RestaurantOut(BaseModel):
     description: str | None = None
     image: str | None = None
     phone: str | None = None
+
+    category: str | None = None
 
     address: RestaurantAddress | None = None
     latitude: float | None = None

@@ -57,7 +57,7 @@ def create_payment_intent_for_order(order: Order):
     payment_intent = stripe.PaymentIntent.create(
         amount=int(Decimal(str(order.total)) * 100),
         currency="brl",
-        automatic_payment_methods={"enabled": True},
+        payment_method_types=["card", "pix"],
         transfer_group=order.transfer_group,
         metadata={
             "order_id": str(order.id),

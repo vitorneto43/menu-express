@@ -14,6 +14,7 @@ class Product(Base):
     image: Mapped[str | None] = mapped_column(String(255), nullable=True)
     available: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     created_at: Mapped[DateTime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    category: Mapped[str | None] = mapped_column(String(100), nullable=True)
 
     restaurant = relationship("Restaurant", back_populates="products")
     order_items = relationship("OrderItem", back_populates="product")
