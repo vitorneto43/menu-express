@@ -65,6 +65,12 @@ def register(user_in: UserCreate, db: Session = Depends(get_db)):
     if existing:
         raise HTTPException(status_code=400, detail="E-mail já cadastrado")
 
+    if len(user_in.password.encode("utf-8")) > 72:
+        raise HTTPException(
+            status_code=400,
+            detail="A senha não pode ter mais de 72 caracteres"
+        )
+
     hashed = hash_password(user_in.password)
     print("=== SENHA HASH GERADA ===")
 
@@ -88,14 +94,27 @@ def register(user_in: UserCreate, db: Session = Depends(get_db)):
     return user
 
 
-
 @router.post("/login")
 def login(data: UserLogin, db: Session = Depends(get_db)):
     user = db.execute(
         select(User).where(User.email == data.email)
     ).scalar_one_or_none()
 
-    if not user or not verify_password(data.password, user.password_hash):
+    if not user:
+        raise HTTPException(status_code=401, detail="Credenciais inválidas")
+
+    if len(data.password.encode("utf-8")) > 72:
+        raise HTTPException(
+            status_code=400,
+            detail="A senha não pode ter mais de 72 caracteres"
+        )
+
+    try:
+        valid = verify_password(data.password, user.password_hash)
+    except Exception:
+        raise HTTPException(status_code=400, detail="Erro na verificação da senha")
+
+    if not valid:
         raise HTTPException(status_code=401, detail="Credenciais inválidas")
 
     restaurant = db.execute(
